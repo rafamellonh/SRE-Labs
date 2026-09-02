@@ -1,0 +1,25 @@
+# Application do ArgoCD apontando para este repositorio.
+# Ajustar repoURL antes de aplicar.
+#
+# Com selfHeal: true, mudancas manuais via kubectl sao revertidas
+# automaticamente - disciplina GitOps por construcao.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lab-apps
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU-USUARIO/sre-lab
+    targetRevision: main
+    path: manifests/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

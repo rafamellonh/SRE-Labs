@@ -1,0 +1,36 @@
+all:
+  vars:
+    ansible_user: rafael
+
+  children:
+    k8s_control_plane:
+      hosts:
+        k8s-cp-01: { ansible_host: 192.168.2.151 }
+
+    k8s_workers:
+      hosts:
+        k8s-worker-01: { ansible_host: 192.168.2.152 }
+        k8s-worker-02: { ansible_host: 192.168.2.153 }
+
+    k8s_cluster:
+      children:
+        k8s_control_plane:
+        k8s_workers:
+
+    observability:
+      hosts:
+        obs-01: { ansible_host: 192.168.2.154 }
+        zbx-01: { ansible_host: 192.168.2.157 }
+
+    apps:
+      hosts:
+        svc-01: { ansible_host: 192.168.2.155 }
+
+    # O no de controle nao esta no inventory por padrao.
+    # Para monitora-lo tambem, descomentar:
+    #
+    # automation:
+    #   hosts:
+    #     ansible-ctl:
+    #       ansible_host: 192.168.2.156
+    #       ansible_connection: local

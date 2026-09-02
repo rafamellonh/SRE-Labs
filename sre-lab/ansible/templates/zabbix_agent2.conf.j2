@@ -1,0 +1,11 @@
+# Gerenciado pelo Ansible - alteracoes manuais serao sobrescritas
+
+# 172.16.0.0/12 e a rede do Docker: o zabbix-server roda em container
+# e a conexao chega com IP dessa faixa, nao do host.
+Server={{ zabbix_server }},172.16.0.0/12
+ServerActive={{ zabbix_server }}
+
+# Define o nome com que o host se cadastra via auto-registro
+Hostname={{ inventory_hostname }}
+
+LogFile=/var/log/zabbix/zabbix_agent2.log
