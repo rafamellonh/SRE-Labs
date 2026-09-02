@@ -1,72 +1,71 @@
-# SRE Lab
+# SRE Labs
 
-A seven-VM lab built from scratch on two Dell mini PCs to practice cluster
-bootstrapping, layered monitoring, and chaos engineering.
+Laboratório de estudo de SRE sobre dois mini PCs Dell com Hyper-V, cobrindo
+Kubernetes, observabilidade em duas camadas (Prometheus + Zabbix), automação com
+Ansible e — em construção — SLO com error budget, GitOps e engenharia de caos.
 
-Covers Kubernetes, two-layer observability (Prometheus + Zabbix), Ansible
-automation, and — in progress — SLOs with error budgets, GitOps, and chaos
-experiments.
+Documentação viva: o que está aqui reflete o que está de pé no ambiente.
 
-Living documentation: what's here reflects what's actually running.
+🇬🇧 [English documentation](sre-lab/README.en.md)
 
-🇧🇷 [Documentação em português](README.md)
+## Estado atual
 
-## Current state
-
-| # | Phase | Status |
+| # | Fase | Status |
 |---|---|---|
-| 0 | Prepare Hyper-V hosts | ✅ |
-| 1 | Create the 7 VMs | ✅ |
-| 2 | Static networking | ✅ |
-| 3 | Ansible (control node + inventory) | ✅ |
-| 4 | Kubernetes cluster (kubeadm + Calico) | ✅ |
+| 0 | Preparar hosts Hyper-V | ✅ |
+| 1 | Criar as 7 VMs | ✅ |
+| 2 | Rede estática | ✅ |
+| 3 | Ansible (nó de controle + inventory) | ✅ |
+| 4 | Cluster Kubernetes (kubeadm + Calico) | ✅ |
 | 5 | MetalLB + ingress-nginx | ✅ |
-| 6 | Zabbix 7.0 + agents + Grafana datasource | ✅ |
+| 6 | Zabbix 7.0 + agentes + datasource Grafana | ✅ |
 | 7 | kube-prometheus-stack | ✅ |
-| 8 | Instrumented app + SLO | ⬜ |
-| 9 | ArgoCD (GitOps) + chaos experiments | 🚧 |
+| 8 | App instrumentada + SLO | ⬜ |
+| 9 | ArgoCD (GitOps) + experimentos de caos | 🚧 |
 
-## Quick access
+## Acesso rápido
 
-| Service | Address | Credential |
+| Serviço | Endereço | Credencial |
 |---|---|---|
 | Grafana | http://192.168.2.201 | `admin` / secret `kps-grafana` |
 | Alertmanager | http://192.168.2.202:9093 | — |
-| Zabbix | http://192.168.2.157:8080 | `Admin` / set during setup |
+| Zabbix | http://192.168.2.157:8080 | `Admin` / definida no setup |
 | ArgoCD | https://192.168.2.203 | `admin` / secret `argocd-initial-admin-secret` |
-| Kubernetes API | https://192.168.2.151:6443 | kubeconfig on `k8s-cp-01` |
+| Kubernetes API | https://192.168.2.151:6443 | kubeconfig em `k8s-cp-01` |
 
 ```bash
-# Grafana password
+# senha do Grafana
 kubectl -n monitoring get secret kps-grafana -o jsonpath="{.data.admin-password}" | base64 -d; echo
 
-# ArgoCD initial password
+# senha inicial do ArgoCD
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
 
-## Repository layout
+## Estrutura do repositório
 
 ```
-.
-├── docs/                    Architecture and operations documentation
-│   ├── en/                  English version
-│   ├── infraestrutura.md    Environment map, VMs, networking, sizing
-│   ├── instalacao.md        Step-by-step of what was executed
-│   ├── decisoes.md          Technical decisions and their rationale
-│   └── troubleshooting.md   Problems hit and how they were solved
-├── hyperv/                  PowerShell provisioning scripts
-├── ansible/                 Control node: inventory, config, playbooks
-├── manifests/               Kubernetes manifests
-│   ├── metallb/             IPAddressPool and L2Advertisement
-│   ├── monitoring/          kube-prometheus-stack values, SLO rules
-│   ├── apps/                Demo applications
-│   └── argocd/              Application definitions (GitOps)
-└── zabbix/                  Zabbix stack docker-compose
+sre-lab/
+├── docs/                    Documentação de arquitetura e operação
+│   ├── en/                  Versão em inglês
+│   ├── infraestrutura.md    Mapa do ambiente, VMs, rede, dimensionamento
+│   ├── instalacao.md        Passo a passo do que foi executado
+│   ├── decisoes.md          Decisões técnicas e suas justificativas
+│   └── troubleshooting.md   Problemas encontrados e como foram resolvidos
+├── hyperv/                  Scripts PowerShell de provisionamento das VMs
+├── ansible/                 Nó de controle: inventory, config e playbooks
+├── manifests/               Manifests Kubernetes
+│   ├── metallb/             IPAddressPool e L2Advertisement
+│   ├── monitoring/          values.yaml do kube-prometheus-stack, regras de SLO
+│   ├── apps/                Aplicações de demonstração
+│   └── argocd/              Definições de Application (GitOps)
+└── zabbix/                  docker-compose do stack Zabbix
 ```
 
-## Where to start
+## Por onde começar
 
-- Understand the environment → [`docs/en/infrastructure.md`](docs/en/infrastructure.md)
-- Rebuild from scratch → [`docs/en/installation.md`](docs/en/installation.md)
-- Understand the *why* → [`docs/en/decisions.md`](docs/en/decisions.md)
-- Something broke → [`docs/en/troubleshooting.md`](docs/en/troubleshooting.md)
+- Entender o ambiente → [`sre-lab/docs/infraestrutura.md`](sre-lab/docs/infraestrutura.md)
+- Reproduzir do zero → [`sre-lab/docs/instalacao.md`](sre-lab/docs/instalacao.md)
+- Entender o *porquê* das escolhas → [`sre-lab/docs/decisoes.md`](sre-lab/docs/decisoes.md)
+- Algo quebrou → [`sre-lab/docs/troubleshooting.md`](sre-lab/docs/troubleshooting.md)
+- Guia de planejamento original → [`sre-lab/docs/guia-planejamento.md`](sre-lab/docs/guia-planejamento.md)
+- Bootstrap manual do cluster → [`sre-lab/docs/k8s-instalacao-manual.md`](sre-lab/docs/k8s-instalacao-manual.md)
