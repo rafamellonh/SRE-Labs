@@ -1,0 +1,80 @@
+# Baseline de boas praticas para todos os hosts Linux.
+# PENDENTE de aplicacao - ver docs/decisoes.md
+
+- name: Baseline dos hosts Linux
+  hosts: all
+  become: true
+  vars:
+    timezone: America/Toronto
+
+  tasks:
+    - name: Timezone padronizado
+      timezone:
+        name: "{{ timezone }}"
+
+    # Certificados do k8s e etcd sao sensiveis a drift de relogio.
+    # VMs em Hyper-V com AutomaticStopAction=Save acordam atrasadas.
+    - name: Instalar chrony
+      package:
+        name: chrony
+        state: present
+
+    - name: Habilitar chrony
+      systemd:
+        name: "{{ 'chrony' if ansible_os_family == 'Debian' else 'chronyd' }}"
+        state: started
+        enabled: true
+
+    - name: Limites de arquivos abertos
+      pam_limits:
+        domain: '*'
+        limit_type: "{{ item }}"
+        limit_item: nofile
+        value: '65536'
+      loop: [soft, hard]
+
+    - name: Sysctl de produção
+      copy:
+        dest: /etc/sysctl.d/99-lab.conf
+        content: |
+          # Padroes do Ubuntu sao baixos demais para Prometheus/ArgoCD/kubelet.
+          # Quando estoura, pods entram em CrashLoop com "too many open files".
+          fs.inotify.max_user_instances = 1024
+          fs.inotify.max_user_watches   = 524288
+          net.core.somaxconn            = 4096
+          vm.max_map_count              = 262144
+          vm.swappiness                 = 0
+          net.ipv4.tcp_keepalive_time   = 600
+      notify: reload sysctl
+
+    # Sem limite, o journal cresce ate encher o disco
+    - name: Journald com limite de tamanho
+      lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#?SystemMaxUse='
+        line: 'SystemMaxUse=500M'
+      notify: restart journald
+
+    # Atualizacao automatica pode atualizar pacote fixado e quebrar o cluster
+    - name: Desativar unattended-upgrades no cluster
+      systemd:
+        name: unattended-upgrades
+        state: stopped
+        enabled: false
+      when:
+        - ansible_os_family == 'Debian'
+        - inventory_hostname in groups['k8s_cluster']
+
+    - name: Ferramentas de diagnóstico
+      package:
+        name: [htop, iotop, sysstat, tcpdump, jq, curl, vim]
+        state: present
+
+  handlers:
+    - name: reload sysctl
+      command: sysctl --system
+
+    - name: restart journald
+      systemd:
+        name: systemd-journald
+        state: restarted
